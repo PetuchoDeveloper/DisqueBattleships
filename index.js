@@ -14,6 +14,8 @@ let team1Boats = 0
 let team2Boats = 0
 
 let players = []
+let team1Victories = 0
+let team2Victories = 0
 let teamTurn = "team1"
 let team1playerTurns = []
 let team2playerTurns = []
@@ -32,6 +34,7 @@ const suspenseAudio = new Audio('./assets/audio/suspense.mp3')
 suspenseAudio.volume = 0.1
 const roundMusic = new Audio('./assets/audio/RoundMusic.mp3')
 roundMusic.volume = 0.3
+
 
 const showHitAnimation = (casilla) => {
     // Create video element
@@ -123,7 +126,7 @@ const createPlayer = () => {
         alert("Debes ingresar un nombre")
         return;
     }
-    players.push({ name, color, team })
+    players.push({ name, color, team, boatsDestroyed: 0 })
     console.log(players)
 
     const existingFeedback = document.querySelector('.player-feedback')
@@ -176,7 +179,7 @@ const continueConfiguring = () => {
 
     const playerForm = document.querySelector('#player-creation-container')
     playerForm.remove()
-    
+
     welcomeScreen.querySelector('h1').innerText = "Configura el juego"
 
     welcomeScreen.insertAdjacentHTML('beforeend', `
@@ -258,6 +261,16 @@ const displayConfig = (team) => {
             return;
         }
     })
+    //clear tables in case the user decides to configure the other teams boats
+    for (let i = 0; i < casillas; i++) {
+        for (let j = 0; j < casillas; j++) {
+            if (team == "team1") {
+                team1Table[i][j] = 0
+            } else {
+                team2Table[i][j] = 0
+            }
+        }
+    }
     document.querySelector('#confirm-button').style.display = "block"
     document.querySelectorAll('.configuring-boats p')[0].innerText = `Configurando barcos para ${team}`
 
@@ -384,7 +397,16 @@ const displayTacticalTables = () => {
 
 const win = (c) => {
     const audio = new Audio('./assets/audio/yippee!.mp3');
-    audio.play();
+    const victoryAudio = new Audio('./assets/audio/victory.mp3');
+    roundMusic.pause()
+    audio.play();   
+    victoryAudio.play();
+
+    if (teamTurn == "team1") {
+        team1Victories++
+    } else {
+        team2Victories++
+    }
     // Show explosion animation on hit
     if (c) {
         showHitAnimation(c)
@@ -411,7 +433,19 @@ const hit = (c) => {
 }
 const miss = () => {
     const audio = new Audio('./assets/audio/GodDamn.mp3');
-    audio.play();
+    const audio2 = new Audio('./assets/audio/DAMN.mp3');
+    const audio3 = new Audio('./assets/audio/vamos.mp3');
+    const audio4 = new Audio('./assets/audio/noeresjessejoy.mp3')
+    const audio5 = new Audio('./assets/audio/brazilphonk.mp3')
+    audio2.volume = 0.5;
+    
+    const audioToPlay = Math.floor(Math.random() * 5)
+    if (audioToPlay == 0) audio.play()
+    if (audioToPlay == 1) audio2.play()
+    if (audioToPlay == 2) audio3.play()
+    if (audioToPlay == 3) audio4.play()
+    if (audioToPlay == 4) audio5.play()
+
     document.querySelectorAll('.casilla').forEach((casilla) => {
         casilla.replaceWith(casilla.cloneNode(true))
     })
@@ -427,7 +461,8 @@ const attack = () => {
     if (document.querySelector('#turn-screen')) document.querySelector('#turn-screen').remove()
 
     displayTacticalTables()
-
+    const whereIsLast = new Audio('./assets/audio/MYACE.mp3')
+    
     document.querySelectorAll('.casilla').forEach((casilla) => {
         casilla.addEventListener('click', () => {
             let y = casilla.id.split('-')[1]
@@ -442,9 +477,14 @@ const attack = () => {
                     team1TacticalTable[y][x] = 2
                     casilla.style.backgroundColor = 'red'
                     team2Boats--
+                    
+                    team1playerTurns[team1playerTurn].boatsDestroyed++
                     if (team2Boats == 0) {
                         win(casilla)
                         return
+                    }
+                    if(team2Boats == 1){
+                        whereIsLast.play()
                     }
                     hit(casilla)
 
@@ -468,9 +508,14 @@ const attack = () => {
                     team2TacticalTable[y][x] = 2
                     casilla.style.backgroundColor = 'red'
                     team1Boats--
+                   
+                    team2playerTurns[team2playerTurn].boatsDestroyed++
                     if (team1Boats == 0) {
                         win(casilla)
                         return
+                    }
+                    if(team1Boats == 1){
+                        whereIsLast.play()
                     }
                     hit(casilla)
 
@@ -612,3 +657,71 @@ startButton.addEventListener('click', () => {
     `)
 })
 
+const openLeaderboard = () => {
+    // Sort players by boats destroyed (descending)
+    const sortedPlayers = [...players].sort((a, b) => b.boatsDestroyed - a.boatsDestroyed)
+
+    const leaderboardHTML = `
+        <div id="leaderboard-overlay">
+            <div class="leaderboard-container">
+                <button id="close-leaderboard" onclick="closeLeaderboard()">Cerrar</button>
+                <div class="leaderboard-table" id="team-victories-table">
+                    <h2>Victorias de Equipos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Equipo</th>
+                                <th>Victorias</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Equipo 1</td>
+                                <td>${team1Victories}</td>
+                            </tr>
+                            <tr>
+                                <td>Equipo 2</td>
+                                <td>${team2Victories}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="leaderboard-table" id="players-table">
+                    <h2>Jugadores</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Equipo</th>
+                                <th>Barcos Destruidos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sortedPlayers.map(p => `
+                                <tr>
+                                    <td>
+                                        <div class="player-row">
+                                            <div class="player-color-indicator" style="background-color: ${p.color}"></div>
+                                            ${p.name}
+                                        </div>
+                                    </td>
+                                    <td>${p.team === 'team1' ? 'Equipo 1' : 'Equipo 2'}</td>
+                                    <td>${p.boatsDestroyed}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `
+    document.body.insertAdjacentHTML('beforeend', leaderboardHTML)
+}
+
+const closeLeaderboard = () => {
+    const overlay = document.querySelector('#leaderboard-overlay')
+    if (overlay) overlay.remove()
+}
+
+const leaderboardButton = document.querySelector('#leaderboard-btn')
+leaderboardButton.addEventListener('click', openLeaderboard)
