@@ -25,6 +25,14 @@ let team2Table = []
 let team1TacticalTable = []
 let team2TacticalTable = []
 
+const backgroundAudio = new Audio('./assets/audio/MenuBackground.mp3')
+backgroundAudio.volume = 0.1
+backgroundAudio.loop = true
+const suspenseAudio = new Audio('./assets/audio/suspense.mp3')
+suspenseAudio.volume = 0.1
+const roundMusic = new Audio('./assets/audio/RoundMusic.mp3')
+roundMusic.volume = 0.3
+
 const showHitAnimation = (casilla) => {
     // Create video element
     const video = document.createElement('video')
@@ -127,10 +135,37 @@ const createPlayer = () => {
 
     document.querySelector('#player-name').value = ''
 
+    updatePlayerLists()
+
     setTimeout(() => {
         const feedback = document.querySelector('.player-feedback')
         if (feedback) feedback.remove()
     }, 3000)
+}
+
+const updatePlayerLists = () => {
+    const team1List = document.querySelector('#team1-list .list-content')
+    const team2List = document.querySelector('#team2-list .list-content')
+
+    if (!team1List || !team2List) return
+
+    team1List.innerHTML = players
+        .filter(p => p.team === 'team1')
+        .map(p => `
+            <div class="player-list-item">
+                <div class="player-color-dot" style="background-color: ${p.color}"></div>
+                <span>${p.name}</span>
+            </div>
+        `).join('')
+
+    team2List.innerHTML = players
+        .filter(p => p.team === 'team2')
+        .map(p => `
+            <div class="player-list-item">
+                <div class="player-color-dot" style="background-color: ${p.color}"></div>
+                <span>${p.name}</span>
+            </div>
+        `).join('')
 }
 
 const continueConfiguring = () => {
@@ -139,9 +174,9 @@ const continueConfiguring = () => {
         return;
     }
 
-    const playerForm = document.querySelector('#player-form')
+    const playerForm = document.querySelector('#player-creation-container')
     playerForm.remove()
-    welcomeScreen.querySelector('button').remove()
+    
     welcomeScreen.querySelector('h1').innerText = "Configura el juego"
 
     welcomeScreen.insertAdjacentHTML('beforeend', `
@@ -225,6 +260,10 @@ const displayConfig = (team) => {
     })
     document.querySelector('#confirm-button').style.display = "block"
     document.querySelectorAll('.configuring-boats p')[0].innerText = `Configurando barcos para ${team}`
+
+    document.querySelectorAll('.casilla').forEach(casilla => {
+        casilla.replaceWith(casilla.cloneNode(true))
+    })
 
     document.querySelectorAll('.casilla').forEach(casilla => {
         casilla.addEventListener('click', () => {
@@ -344,6 +383,8 @@ const displayTacticalTables = () => {
 }
 
 const win = (c) => {
+    const audio = new Audio('./assets/audio/yippee!.mp3');
+    audio.play();
     // Show explosion animation on hit
     if (c) {
         showHitAnimation(c)
@@ -366,15 +407,11 @@ const hit = (c) => {
     document.querySelectorAll('.casilla').forEach((casilla) => {
         casilla.replaceWith(casilla.cloneNode(true))
     })
-    document.querySelector('body').insertAdjacentHTML('beforeend', `
-            <div id="turn-screen">
-                <h2>${teamTurn == "team1" ? team1playerTurns[team1playerTurn].name : team2playerTurns[team2playerTurn].name}</h2>
-                <h3>Le ha dado a un barco!</h3>
-                <button id="next-round-button" onclick="startRound()">Turno del enemigo</button>
-            </div>
-            `)
+    attack()
 }
 const miss = () => {
+    const audio = new Audio('./assets/audio/GodDamn.mp3');
+    audio.play();
     document.querySelectorAll('.casilla').forEach((casilla) => {
         casilla.replaceWith(casilla.cloneNode(true))
     })
@@ -387,7 +424,7 @@ const miss = () => {
             `)
 }
 const attack = () => {
-    document.querySelector('#turn-screen').remove()
+    if (document.querySelector('#turn-screen')) document.querySelector('#turn-screen').remove()
 
     displayTacticalTables()
 
@@ -415,11 +452,11 @@ const attack = () => {
                     team1TacticalTable[y][x] = 1
                     casilla.style.backgroundColor = 'gray'
                     miss()
-                }
-                teamTurn = "team2"
-                team1playerTurn++
-                if (team1playerTurn == team1playerTurns.length) {
-                    team1playerTurn = 0
+                    teamTurn = "team2"
+                    team1playerTurn++
+                    if (team1playerTurn == team1playerTurns.length) {
+                        team1playerTurn = 0
+                    }
                 }
             } else {
                 if (team2TacticalTable[y][x] == 1 || team2TacticalTable[y][x] == 2) {
@@ -441,11 +478,11 @@ const attack = () => {
                     team2TacticalTable[y][x] = 1
                     casilla.style.backgroundColor = 'gray'
                     miss()
-                }
-                teamTurn = "team1"
-                team2playerTurn++
-                if (team2playerTurn == team2playerTurns.length) {
-                    team2playerTurn = 0
+                    teamTurn = "team1"
+                    team2playerTurn++
+                    if (team2playerTurn == team2playerTurns.length) {
+                        team2playerTurn = 0
+                    }
                 }
             }
         })
@@ -454,6 +491,9 @@ const attack = () => {
 
 const startRound = () => {
     status = "playing"
+    suspenseAudio.pause()
+    roundMusic.play()
+    roundMusic.loop = true
     console.log(teamTurn)
     if (document.querySelector('#turn-screen')) {
         document.querySelector('#turn-screen').remove()
@@ -482,7 +522,8 @@ const startGame = () => {
     boatsLimit = document.querySelector('#boats-limit').value
     team1Boats = boatsLimit
     team2Boats = boatsLimit
-
+    suspenseAudio.play()
+    suspenseAudio.loop = true
     if (casillas <= 2) {
         alert("el tablero debe ser al menos de 3x3")
         return;
@@ -499,6 +540,7 @@ const startGame = () => {
     welcomeScreen.remove()
     console.log(casillas, team1Color, team2Color, boatsLimit)
     generateTables()
+    backgroundAudio.pause()
 }
 
 const restartGame = () => {
@@ -523,32 +565,50 @@ const restartGame = () => {
     tablerosDisplay.innerHTML = ""
     hasTeam1Configured = false
     hasTeam2Configured = false
+    roundMusic.pause()
+    suspenseAudio.play()
+    suspenseAudio.loop = true
     generateTables()
 }
 
 startButton.addEventListener('click', () => {
+    backgroundAudio.play()
     welcomeScreen.querySelector('h1').innerText = "Crea tu jugador"
     welcomeScreen.querySelector('button').remove()
     welcomeScreen.insertAdjacentHTML('beforeend', `
-        <div id="player-form" action="">
-            <div class="player-input-row">
-                <input type="color" id="player-color" value="#1E88E5">
-                <input type="text" placeholder="Nombre del jugador" id="player-name">
+        <div id="player-creation-container">
+            <div id="team1-list" class="team-list">
+                <h3>Equipo 1</h3>
+                <div class="list-content"></div>
             </div>
-            <div class="team-selection">
-                <label for="player-team1">
-                    <input type="radio" id="player-team1" name="player-team" value="team1">
-                    Equipo 1
-                </label>
-                <label for="player-team2">
-                    <input type="radio" id="player-team2" name="player-team" value="team2">
-                    Equipo 2
-                </label>
-            </div>
-            <button onclick="createPlayer()">Crear Jugador</button>
-        </div>
+            
+            <div class="center-column">
+                <div id="player-form" action="">
+                    <div class="player-input-row">
+                        <input type="color" id="player-color" value="#1E88E5">
+                        <input type="text" placeholder="Nombre del jugador" id="player-name">
+                    </div>
+                    <div class="team-selection">
+                        <label for="player-team1">
+                            <input type="radio" id="player-team1" name="player-team" value="team1">
+                            Equipo 1
+                        </label>
+                        <label for="player-team2">
+                            <input type="radio" id="player-team2" name="player-team" value="team2">
+                            Equipo 2
+                        </label>
+                    </div>
+                    <button onclick="createPlayer()">Crear Jugador</button>
+                </div>
 
-        <button onclick="continueConfiguring()">Continuar</button>
+                <button onclick="continueConfiguring()" id="continue-btn">Continuar</button>
+            </div>
+
+            <div id="team2-list" class="team-list">
+                <h3>Equipo 2</h3>
+                <div class="list-content"></div>
+            </div>
+        </div>
     `)
 })
 

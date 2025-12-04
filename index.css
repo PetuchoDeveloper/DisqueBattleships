@@ -84,6 +84,103 @@ body {
     animation: slideDown var(--transition-slow);
 }
 
+/* Player Creation Lists */
+#player-creation-container {
+    display: grid;
+    grid-template-columns: 30% 40% 30%;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    min-width: 100vw;
+    padding: 0 var(--spacing-lg);
+    animation: scaleIn var(--transition-normal);
+}
+
+.center-column {
+    display: flex;
+    grid-column: 2/3;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+#team1-list {
+    grid-column: 1/2;
+}
+
+#team2-list {
+    grid-column: 3/4;
+}
+
+.team-list {
+    flex: 1;
+    align-self: center;
+    margin: auto;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    height: 70dvh;
+    display: flex;
+    width: 70%;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+}
+
+.team-list h3 {
+    color: var(--light-blue);
+    text-align: center;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.list-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding-right: var(--spacing-xs);
+}
+
+/* Custom Scrollbar for lists */
+.list-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.list-content::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+}
+
+.list-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.player-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-md);
+    animation: slideUp 0.2s ease;
+}
+
+.player-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#continue-btn {
+    width: 100%;
+}
+
 /* Forms */
 #player-form,
 #game-form {
@@ -247,6 +344,15 @@ aside {
     background: var(--bg-secondary);
 }
 
+#jugadores {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: var(--spacing-lg);
+    overflow-y: scroll;
+}
+
 #team1,
 #team2 {
     background: var(--bg-tertiary);
@@ -301,12 +407,12 @@ aside {
     color: var(--text-primary);
 }
 
-.configurar-barcos-team1{
-gap: var(--spacing-md);
-padding: var(--spacing-md);
-background: var(--bg-tertiary);
-border-radius: var(--border-radius-md);
-border: 1px solid var(--border-color);
+.configurar-barcos-team1 {
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
 }
 
 .player-input-row input[type="color"] {
@@ -435,7 +541,7 @@ aside {
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xl);
     width: 30dvw;
     height: 100dvh;
     padding: var(--spacing-xl);
@@ -507,16 +613,18 @@ aside {
 main {
     width: 70dvw;
     height: 100dvh;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 65% 35%;
     justify-content: center;
-    align-items: center;
+    place-items: center;
+    place-self: center;
     gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
 }
 
 #tableros {
-    width: min(60%, 600px);
+    grid-row: 1/2;
+    height: 90%;
     aspect-ratio: 1;
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius-md);
@@ -548,7 +656,8 @@ main {
 
 /* Configuring Boats Section */
 .configuring-boats {
-    width: 100%;
+    width: 90%;
+    grid-row: 2/3;
     min-height: 4rem;
     display: none;
     flex-direction: column;
@@ -716,5 +825,22 @@ main {
     #player-form,
     #game-form {
         min-width: 90%;
+    }
+}
+
+
+@media (max-width: 1024px) {
+    #player-creation-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .team-list {
+        width: 100%;
+        height: 200px;
+    }
+
+    .center-column {
+        width: 100%;
     }
 }
